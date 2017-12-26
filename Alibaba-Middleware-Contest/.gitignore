@@ -1,0 +1,11 @@
+target/
+.classpath
+.project
+.settings/
+src/test
+*.txt
+prerun_data/
+data/
+data2/
+query*/
+goods/
