@@ -67,10 +67,7 @@ public class NioLaserClient {
         socket.setReceiveBufferSize(options.getClientSocketReceiverBufferSize());
         socket.setSendBufferSize(options.getClientSocketSendBufferSize());
         socket.setSoTimeout(options.getClientSocketTimeout());
-        socket.setPerformancePreferences(
-                options.getClientPerformancePreferences()[0],
-                options.getClientPerformancePreferences()[1],
-                options.getClientPerformancePreferences()[2]);
+        socket.setPerformancePreferences(options.getClientPerformancePreferences()[0], options.getClientPerformancePreferences()[1], options.getClientPerformancePreferences()[2]);
         socket.setTrafficClass(options.getClientTrafficClass());
         return socketChannel;
     }
@@ -94,7 +91,6 @@ public class NioLaserClient {
                 while (iter.hasNext()) {
                     final SelectionKey key = iter.next();
                     iter.remove();
-
                     if (key.isConnectable()) {
                         final SocketChannel channel = (SocketChannel) key.channel();
                         if (channel.isConnectionPending()) {
@@ -102,40 +98,31 @@ public class NioLaserClient {
                             channel.finishConnect();
                             break WAITING_FOR_CONNECT;
                         }
-                    }//if
-
-                }//while
-            }//for
-
-        }//try
-
+                    }
+                }
+            }
+        }
         log.info("{} connect successed.", format(socketChannel.socket()));
-
     }
 
     /**
      * 读线程
      */
     final Runnable writer = new Runnable() {
-
         @Override
         public void run() {
             currentThread().setName("client-" + format(socketChannel.socket()) + "-writer");
-
             try (final Selector selector = Selector.open()) {
-
                 try {
                     workCyclicBarrier.await();
                 } catch (Exception e) {
                     log.warn("workCB await failed.", e);
                 }
-
                 final ByteBuffer buffer = ByteBuffer.allocateDirect(options.getClientSendBufferSize());
                 while (isRunning) {
-
-//                    final GetDataReq req = new GetDataReq();
+                    //                    final GetDataReq req = new GetDataReq();
                     if (buffer.remaining() >= Integer.BYTES) {
-//                        buffer.putInt(req.getType());
+                        //                        buffer.putInt(req.getType());
                         buffer.putInt(LaserConstant.PRO_REQ_GETDATA);
                         continue;
                     } else {
@@ -148,11 +135,10 @@ public class NioLaserClient {
                     while (iter.hasNext()) {
                         final SelectionKey key = iter.next();
                         iter.remove();
-
                         if (key.isWritable()) {
-//                            final int count =
+                            //                            final int count =
                             socketChannel.write(buffer);
-//                            log.info("debug for write, count="+count);
+                            //                            log.info("debug for write, count="+count);
                             buffer.compact();
                             key.interestOps(key.interestOps() & ~OP_WRITE);
                         }
@@ -179,22 +165,16 @@ public class NioLaserClient {
 
         @Override
         public void run() {
-
             currentThread().setName("client-" + format(socketChannel.socket()) + "-reader");
             currentThread().setPriority(Thread.MAX_PRIORITY);
-
             final ByteBuffer buffer = ByteBuffer.allocateDirect(options.getClientReceiverBufferSize());
-            final ReadableByteChannel readableByteChannel = options.isEnableCompress()
-                    ? new CompressReadableByteChannel(socketChannel, options.getCompressSize())
-                    : socketChannel;
+            final ReadableByteChannel readableByteChannel = options.isEnableCompress() ? new CompressReadableByteChannel(socketChannel, options.getCompressSize()) : socketChannel;
             try (final Selector selector = Selector.open()) {
-
                 try {
                     workCyclicBarrier.await();
                 } catch (Exception e) {
                     log.warn("workCB await failed.", e);
                 }
-
                 // decode
                 int type;
                 int lineNum = 0;
@@ -205,19 +185,14 @@ public class NioLaserClient {
                 socketChannel.register(selector, OP_READ);
                 MAIN_LOOP:
                 while (isRunning) {
-
                     selector.select();
                     final Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
-
                     while (iter.hasNext()) {
                         final SelectionKey key = iter.next();
                         iter.remove();
-
                         if (key.isReadable()) {
-
                             readableByteChannel.read(buffer);
                             buffer.flip();
-
                             boolean hasMore = true;
                             while (hasMore) {
                                 hasMore = false;
@@ -254,18 +229,14 @@ public class NioLaserClient {
                                         final byte[] data = new byte[len];
                                         buffer.get(data);
                                         reverse(data);
-
                                         state = DecodeState.READ_TYPE;
                                         hasMore = true;
-
                                         // handler GetDataResp
                                         // 由于这里没有做任何异步化操作,包括dataPersistence中也没有
                                         // 所以这里优化将new去掉,避免过多的对象分配
                                         row.setLineNum(lineNum);
                                         row.setData(data);
                                         dataPersistence.putRow(row);
-
-
                                         break;
                                     case READ_GETEOF:
                                         // 收到EOF，结束整个client
@@ -273,29 +244,20 @@ public class NioLaserClient {
                                         countDown.countDown();
                                         log.info("{} receive EOF.", format(socketChannel.socket()));
                                         break MAIN_LOOP;
-
                                     default:
                                         throw new IOException("decode failed, illegal state=" + state);
-                                }//switch
-
-                            }//while:hasMore
-
+                                }
+                            }
                             buffer.compact();
-
-                        }//if:readable
-
-                    }//while:iter
-
-                }//while:MAIN_LOOP
-
+                        }
+                    }
+                }
             } catch (IOException ioe) {
                 if (!socketChannel.socket().isClosed()) {
                     log.warn("{} read failed.", format(socketChannel.socket()), ioe);
                 }
             }
-
         }
-
     };
 
     /**
@@ -314,7 +276,6 @@ public class NioLaserClient {
      * @throws IOException
      */
     public void disconnect() throws IOException {
-
         isRunning = false;
         if (null != socketChannel) {
             socketChannel.close();
@@ -322,18 +283,12 @@ public class NioLaserClient {
         } else {
             log.info("{} disconnect successed.");
         }
-
     }
 
     /**
      * 接收数据解码
      */
     enum DecodeState {
-        READ_TYPE,
-        READ_GETDATA_LINENUM,
-        READ_GETDATA_LEN,
-        READ_GETDATA_DATA,
-        READ_GETEOF
+        READ_TYPE, READ_GETDATA_LINENUM, READ_GETDATA_LEN, READ_GETDATA_DATA, READ_GETEOF
     }
-
 }

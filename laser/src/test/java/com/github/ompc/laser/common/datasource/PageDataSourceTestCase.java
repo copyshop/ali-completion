@@ -15,10 +15,7 @@ public class PageDataSourceTestCase extends AbstractDataSourceTestCase {
     @Override
     DataSource getDataSource(boolean reset) {
         if (reset) {
-            return currentDataSource = new PageDataSource(
-                    new File("./src/test/resources/data/data_1000")
-//                    new File("/Users/vlinux/data/data")
-            );
+            return currentDataSource = new PageDataSource(new File("/home/heyin/idea-workspace/ali-completion/laser/src/test/resources/data/data_1000"));
         } else {
             return currentDataSource;
         }

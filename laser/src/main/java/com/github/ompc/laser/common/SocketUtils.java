@@ -15,11 +15,7 @@ public class SocketUtils {
      * @return 格式化后的信息
      */
     public static String format(Socket socket) {
-        return "["
-                + socket.getLocalAddress()
-                + "->"
-                + socket.getRemoteSocketAddress()
-                + "]";
+        return "[" + socket.getLocalAddress() + "->" + socket.getRemoteSocketAddress() + "]";
     }
 
 }

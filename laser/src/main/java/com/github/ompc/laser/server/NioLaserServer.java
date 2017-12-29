@@ -45,41 +45,30 @@ public class NioLaserServer {
         this.options = options;
     }
 
-
     final Runnable accepter = new Runnable() {
-
         @Override
         public void run() {
-
             currentThread().setName("server-accepter");
             try (final Selector selector = Selector.open()) {
-
                 serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
                 while (isRunning) {
-
                     selector.select();
                     final Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
                     while (iter.hasNext()) {
                         final SelectionKey key = iter.next();
                         iter.remove();
-
                         if (key.isAcceptable()) {
                             final SocketChannel socketChannel = serverSocketChannel.accept();
                             configSocketChannel(socketChannel);
                             new ChildHandler(socketChannel);
                             log.info("{} was connected.", format(socketChannel.socket()));
                         }
-
-                    }//while
-
+                    }
                 }
-
             } catch (IOException ioe) {
                 log.warn("server[port={}] accept failed.", configer.getPort(), ioe);
             }
-
         }
-
     };
 
 
@@ -98,102 +87,69 @@ public class NioLaserServer {
         }
 
         final Runnable childReader = new Runnable() {
-
             @Override
             public void run() {
-
                 currentThread().setName("child-" + format(socketChannel.socket()) + "-reader");
-
                 final ByteBuffer buffer = ByteBuffer.allocateDirect(options.getServerChildReceiverBufferSize());
                 try (final Selector selector = Selector.open()) {
-
                     socketChannel.register(selector, SelectionKey.OP_READ);
-                    while (isRunning
-                            && isReaderRunning) {
-
+                    while (isRunning && isReaderRunning) {
                         selector.select();
                         final Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
                         while (iter.hasNext()) {
                             final SelectionKey key = iter.next();
                             iter.remove();
-
                             if (key.isReadable()) {
-
                                 socketChannel.read(buffer);
                                 buffer.flip();
-
                                 while (true) {
                                     if (buffer.remaining() < Integer.BYTES) {
                                         break;
                                     }
-
                                     final int type = buffer.getInt();
                                     if (type != PRO_REQ_GETDATA) {
                                         throw new IOException("decode failed, illegal type=" + type);
                                     }
-
                                     reqCounter.incrementAndGet();
-
-                                }//while
+                                }
                                 buffer.compact();
-
-
-                            }//if:readable
-
-                        }//while:iter
-
-                    }//while:MAIN_LOOP
-
+                            }
+                        }
+                    }
                 } catch (IOException ioe) {
                     log.info("{} was disconnect for read.", format(socketChannel.socket()));
                 } finally {
                     isReaderRunning = false;
                 }
-
             }
-
         };
 
         final Runnable childWriter = new Runnable() {
-
             @Override
             public void run() {
-
                 currentThread().setName("child-" + format(socketChannel.socket()) + "-writer");
                 currentThread().setPriority(Thread.MAX_PRIORITY);
-
                 final ByteBuffer buffer = ByteBuffer.allocateDirect(options.getServerChildSendBufferSize());
-                final WritableByteChannel writableByteChannel = options.isEnableCompress()
-                        ? new CompressWritableByteChannel(socketChannel, options.getCompressSize())
-                        : socketChannel;
-
+                final WritableByteChannel writableByteChannel = options.isEnableCompress() ? new CompressWritableByteChannel(socketChannel, options.getCompressSize()) : socketChannel;
                 boolean isEOF = false;
                 final Row row = new Row();
                 try (final Selector selector = Selector.open()) {
-
                     final int LIMIT_REMAINING = 212;//TYPE(4B)+LINENUM(4B)+LEN(4B)+DATA(200B)
                     socketChannel.register(selector, SelectionKey.OP_WRITE);
-
                     DecodeState state = DecodeState.FILL_BUFF;
                     boolean isNeedSend = false;
-                    while (isRunning
-                            && isWriterRunning) {
-
+                    while (isRunning && isWriterRunning) {
                         switch (state) {
-
                             case FILL_BUFF: {
-
                                 // 一进来就先判断是否到达了EOF，如果已经到达了则不需要访问数据源
                                 if (isEOF) {
                                     reqCounter.decrementAndGet();
                                     buffer.putInt(PRO_RESP_GETEOF);
                                     isNeedSend = true;
                                 } else {
-
                                     if (reqCounter.get() > 0) {
                                         reqCounter.decrementAndGet();
                                         dataSource.getRow(row);
-
                                         if (row.getLineNum() < 0) {
                                             buffer.putInt(PRO_RESP_GETEOF);
                                             isEOF = true;
@@ -201,19 +157,15 @@ public class NioLaserServer {
                                         } else {
                                             buffer.putInt(PRO_RESP_GETDATA);
                                             buffer.putInt(row.getLineNum());
-
                                             buffer.putInt(row.getData().length);
                                             buffer.put(row.getData());
-
                                             if (buffer.remaining() < LIMIT_REMAINING) {
                                                 // TODO : 目前这里利用了DATA长度不超过200的限制，没有足够的通用性，后续改掉
                                                 isNeedSend = true;
                                             }
                                         }
                                     }
-
                                 }
-
                                 // 前边层层处理之后是否需要发送
                                 if (isNeedSend) {
                                     buffer.flip();
@@ -222,55 +174,41 @@ public class NioLaserServer {
                                 }
                                 break;
                             }
-
-
                             case SEND_BUFF: {
-
                                 selector.select();
                                 final Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
                                 while (iter.hasNext()) {
                                     final SelectionKey key = iter.next();
                                     iter.remove();
-
                                     if (key.isWritable()) {
                                         while (buffer.hasRemaining()) {
-//                                            if( writableByteChannel instanceof CompressWritableByteChannel ) {
-//                                                ((CompressWritableByteChannel)writableByteChannel).write(buffer,isEOF);
-//                                            } else {
-//                                                writableByteChannel.write(buffer);
-//                                            }
+                                            //                                            if( writableByteChannel instanceof CompressWritableByteChannel ) {
+                                            //                                                ((CompressWritableByteChannel)writableByteChannel).write(buffer,isEOF);
+                                            //                                            } else {
+                                            //                                                writableByteChannel.write(buffer);
+                                            //                                            }
                                             writableByteChannel.write(buffer);
                                         }
                                         buffer.compact();
                                         state = DecodeState.FILL_BUFF;
-
-//                                        if (!buffer.hasRemaining()) {
-//                                            // 缓存中的内容发送完之后才跳转到填充
-//                                            state = DecodeState.FILL_BUFF;
-//                                            buffer.compact();
-//                                        }
-
+                                        //                                        if (!buffer.hasRemaining()) {
+                                        //                                            // 缓存中的内容发送完之后才跳转到填充
+                                        //                                            state = DecodeState.FILL_BUFF;
+                                        //                                            buffer.compact();
+                                        //                                        }
                                     }
-
                                 }//while:iter
-
                                 break;
                             }
-
-                        }//switch:state
-
-                    }//while:MAIN_LOOP
-
+                        }
+                    }
                 } catch (IOException ioe) {
                     log.info("{} was disconnect for write.", format(socketChannel.socket()));
                 } finally {
                     isWriterRunning = false;
                 }
-
             }
-
         };
-
     }
 
 
@@ -300,10 +238,7 @@ public class NioLaserServer {
         socket.setReceiveBufferSize(options.getServerChildSocketReceiverBufferSize());
         socket.setSendBufferSize(options.getServerChildSocketSendBufferSize());
         socket.setSoTimeout(options.getServerChildSocketTimeout());
-        socket.setPerformancePreferences(
-                options.getServerChildPerformancePreferences()[0],
-                options.getServerChildPerformancePreferences()[1],
-                options.getServerChildPerformancePreferences()[2]);
+        socket.setPerformancePreferences(options.getServerChildPerformancePreferences()[0], options.getServerChildPerformancePreferences()[1], options.getServerChildPerformancePreferences()[2]);
         socket.setTrafficClass(options.getServerChildTrafficClass());
     }
 
@@ -327,14 +262,11 @@ public class NioLaserServer {
      * @throws IOException
      */
     public void shutdown() throws IOException {
-
         isRunning = false;
         if (null != serverSocketChannel) {
             serverSocketChannel.close();
         }
-
         log.info("server[port={}] shutdown successed.", configer.getPort());
-
     }
 
 
@@ -342,8 +274,7 @@ public class NioLaserServer {
      * 发送数据解码
      */
     enum DecodeState {
-        FILL_BUFF,
-        SEND_BUFF
+        FILL_BUFF, SEND_BUFF
     }
 
 }

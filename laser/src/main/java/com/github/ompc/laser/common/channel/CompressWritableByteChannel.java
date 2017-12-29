@@ -20,14 +20,15 @@ public class CompressWritableByteChannel implements WritableByteChannel {
 
     public CompressWritableByteChannel(WritableByteChannel writableByteChannel, int size) {
         this.writableByteChannel = writableByteChannel;
-        compressBuffer = ByteBuffer.allocate(size+Integer.BYTES);
+        compressBuffer = ByteBuffer.allocate(size + Integer.BYTES);
         unCompressBuffer = ByteBuffer.allocate(size);
-//        unCompressData = new byte[size];
+        //        unCompressData = new byte[size];
     }
 
     /**
      * 写ByteBuffer
-     * @param src 源ByteBuffer
+     *
+     * @param src         源ByteBuffer
      * @param immediately 是否立即发送
      * @return 本次写入数据量
      * @throws IOException 写入异常
@@ -47,14 +48,12 @@ public class CompressWritableByteChannel implements WritableByteChannel {
                         break;
                     }
 
-                    while (src.hasRemaining()
-                            && unCompressBuffer.hasRemaining()) {
+                    while (src.hasRemaining() && unCompressBuffer.hasRemaining()) {
                         unCompressBuffer.put(src.get());
                         count++;
                     }
 
-                    if (!unCompressBuffer.hasRemaining()
-                            || immediately) {
+                    if (!unCompressBuffer.hasRemaining() || immediately) {
                         unCompressBuffer.flip();
                         state = DecodeState.COMPRESS;
                     }
@@ -64,13 +63,13 @@ public class CompressWritableByteChannel implements WritableByteChannel {
 
                 case COMPRESS: {
 
-//                    final byte[] unCompressData = new byte[unCompressBuffer.limit()];
-//                    unCompressBuffer.get(unCompressData);
-//                    unCompressBuffer.compact();
-//                    final byte[] compressData = LaserUtils.compress(unCompressData, 1024);
-//                    compressBuffer.putInt(compressData.length);
-//                    compressBuffer.put(compressData);
-                    compress.compress(unCompressBuffer,unCompressBuffer.limit(), compressBuffer);
+                    //                    final byte[] unCompressData = new byte[unCompressBuffer.limit()];
+                    //                    unCompressBuffer.get(unCompressData);
+                    //                    unCompressBuffer.compact();
+                    //                    final byte[] compressData = LaserUtils.compress(unCompressData, 1024);
+                    //                    compressBuffer.putInt(compressData.length);
+                    //                    compressBuffer.put(compressData);
+                    compress.compress(unCompressBuffer, unCompressBuffer.limit(), compressBuffer);
                     unCompressBuffer.compact();
                     compressBuffer.flip();
                     state = DecodeState.WRITE_DATA;
@@ -113,9 +112,7 @@ public class CompressWritableByteChannel implements WritableByteChannel {
     }
 
     enum DecodeState {
-        READ,
-        COMPRESS,
-        WRITE_DATA
+        READ, COMPRESS, WRITE_DATA
     }
 
 }

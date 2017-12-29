@@ -103,8 +103,8 @@ public class PageDataPersistence implements DataPersistence {
         while (pageTable[tableIdx].pageNum != pageNum) {
             // 如果页码表中当前位置所存放的页面编码对应不上
             // 则认为页切换不及时，这里采用自旋等待策略，其实相当危险
-//            log.info("debug for spin, page.pageNum={},pageNum={},lineNum={}",
-//                    new Object[]{pageTable[tableIdx].pageNum, pageNum, lineNum});
+            //            log.info("debug for spin, page.pageNum={},pageNum={},lineNum={}",
+            //                    new Object[]{pageTable[tableIdx].pageNum, pageNum, lineNum});
         }
 
         final Page page = pageTable[tableIdx];
@@ -115,20 +115,13 @@ public class PageDataPersistence implements DataPersistence {
         final byte[] bytesOfLineNum = String.valueOf(lineNum).getBytes();
 
         // 计算row中有效大小(B)
-        final int validByteCount = 0
-                + bytesOfLineNum.length
-                + row.getData().length
-                + LINE_DELIMITER.length;
+        final int validByteCount = 0 + bytesOfLineNum.length + row.getData().length + LINE_DELIMITER.length;
 
         // 计算当前row所在page.data中的offset
         final int offset = rowNum * PAGE_ROW_SIZE;
 
         // 刷入页中
-        ByteBuffer.wrap(page.data, offset, PAGE_ROW_SIZE)
-                .putInt(validByteCount)
-                .put(bytesOfLineNum)
-                .put(row.getData())
-                .put(LINE_DELIMITER);
+        ByteBuffer.wrap(page.data, offset, PAGE_ROW_SIZE).putInt(validByteCount).put(bytesOfLineNum).put(row.getData()).put(LINE_DELIMITER);
 
         // 更新页面数据
         page.byteCount.addAndGet(validByteCount);
@@ -187,8 +180,7 @@ public class PageDataPersistence implements DataPersistence {
                 final Page page = pageTable[nextSwitchPageTableIndex];
                 final int rowCount = page.rowCount.get();
 
-                if (rowCount < PAGE_ROWS_NUM
-                        && !isFlushFlag) {
+                if (rowCount < PAGE_ROWS_NUM && !isFlushFlag) {
                     // 当前页还没被锁定且不是刷新状态，休眠等待被唤醒
                     pageSwitchLock.lock();
                     try {
@@ -201,8 +193,7 @@ public class PageDataPersistence implements DataPersistence {
                     }//try
                 }
 
-                if (page.rowCount.get() == PAGE_ROWS_NUM
-                        || (isFlushFlag && rowCount > 0)) {
+                if (page.rowCount.get() == PAGE_ROWS_NUM || (isFlushFlag && rowCount > 0)) {
 
                     // 当前页面已被写需要立即刷入文件缓存中
                     try {
@@ -210,7 +201,7 @@ public class PageDataPersistence implements DataPersistence {
                         // 写完文件缓存后丢入待刷新队列中
                         final MappedByteBuffer mappedBuffer = fileChannel.map(READ_WRITE, fileOffset, page.byteCount.get());
                         final ByteBuffer dataBuffer = ByteBuffer.wrap(page.data);
-//                        final int rowCount = page.rowCount.get();
+                        //                        final int rowCount = page.rowCount.get();
                         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
                             // 当前行偏移量
                             final int offsetOfRow = rowIdx * PAGE_ROW_SIZE;
@@ -243,8 +234,7 @@ public class PageDataPersistence implements DataPersistence {
                 }
 
 
-                if (isFlushFlag
-                        && rowCount == 0) {
+                if (isFlushFlag && rowCount == 0) {
                     break;
                 }
 
@@ -312,18 +302,15 @@ public class PageDataPersistence implements DataPersistence {
 
         /*
          * 页面总行数
-         */
-        AtomicInteger rowCount = new AtomicInteger(0);
+         */ AtomicInteger rowCount = new AtomicInteger(0);
 
         /*
          * 页面总字节数
-         */
-        AtomicLong byteCount = new AtomicLong(0);
+         */ AtomicLong byteCount = new AtomicLong(0);
 
         /*
          * 数据段
-         */
-        byte[] data = new byte[PAGE_ROW_SIZE * PAGE_ROWS_NUM];
+         */ byte[] data = new byte[PAGE_ROW_SIZE * PAGE_ROWS_NUM];
 
 
     }

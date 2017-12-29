@@ -50,8 +50,7 @@ public class PageDataSource implements DataSource {
      * 页行数<br/>
      * 一页中总共有几行
      */
-    private final int PAGE_ROWS_NUM =
-            3000000
+    private final int PAGE_ROWS_NUM = 3000000
             //100000
             ;
 
@@ -97,9 +96,9 @@ public class PageDataSource implements DataSource {
             final int readCount = page.readCount.get();
             final int rowCount = page.rowCount;
 
-            if( readCount == rowCount ) {
+            if (readCount == rowCount) {
 
-                if( page.isLast ) {
+                if (page.isLast) {
                     row.setLineNum(EMPTY_ROW.getLineNum());
                     row.setData(EMPTY_ROW.getData());
                     return row;
@@ -196,8 +195,7 @@ public class PageDataSource implements DataSource {
                     // 2.将文件缓存刷入页码
                     final Page page = pageTable[nextSwitchPageTableIndex];
 
-                    if (page.isInit
-                            && page.readCount.get() < page.rowCount) {
+                    if (page.isInit && page.readCount.get() < page.rowCount) {
                         // 如果已经被初始化后的当前页还没被读完,休眠等待被唤醒
                         pageSwitchLock.lock();
                         try {
@@ -210,8 +208,7 @@ public class PageDataSource implements DataSource {
                         }//try
                     }
 
-                    if (!page.isInit
-                            || page.readCount.get() == page.rowCount) {
+                    if (!page.isInit || page.readCount.get() == page.rowCount) {
 
                         final ByteBuffer dataBuffer = ByteBuffer.wrap(page.data);
 
@@ -224,8 +221,7 @@ public class PageDataSource implements DataSource {
                         while (true) {
                             // 只有页面尚未被填满的时候才需要开始填充
 
-                            if (null == mappedBuffer
-                                    || !mappedBuffer.hasRemaining()) {
+                            if (null == mappedBuffer || !mappedBuffer.hasRemaining()) {
                                 // 如果文件缓存是第一次加载,或者已到达尽头,需要做一次切换映射
                                 // 修正映射长度
                                 final long fixLength = (fileOffset + BUFFER_SIZE >= fileSize) ? fileSize - fileOffset : BUFFER_SIZE;
@@ -309,8 +305,7 @@ public class PageDataSource implements DataSource {
                         // 重新计算页面参数
                         page.rowCount = rowIdx;
                         page.readCount.set(0);
-                        log.info("page.pageNum={} was switched. fileOffset={},fileSize={},page.rowCount={};",
-                                page.pageNum, fileOffset, fileSize, page.rowCount);
+                        log.info("page.pageNum={} was switched. fileOffset={},fileSize={},page.rowCount={};", page.pageNum, fileOffset, fileSize, page.rowCount);
 
                         if (fileOffset == fileSize) {
                             page.isLast = true;
@@ -368,8 +363,7 @@ public class PageDataSource implements DataSource {
 
         /*
          * 已被读取行数
-         */
-        AtomicInteger readCount = new AtomicInteger(0);
+         */ AtomicInteger readCount = new AtomicInteger(0);
 
         /*
          * 是否最后一页
@@ -384,8 +378,7 @@ public class PageDataSource implements DataSource {
 
         /*
          * 数据段
-         */
-        byte[] data = new byte[PAGE_ROW_SIZE * PAGE_ROWS_NUM];
+         */ byte[] data = new byte[PAGE_ROW_SIZE * PAGE_ROWS_NUM];
 
     }
 

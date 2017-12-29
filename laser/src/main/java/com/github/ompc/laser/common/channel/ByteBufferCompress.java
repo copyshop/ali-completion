@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 public interface ByteBufferCompress {
 
     void compress(ByteBuffer src, int len, ByteBuffer dst) throws IOException;
+
     void unCompress(ByteBuffer src, int len, ByteBuffer dst) throws IOException;
 
 }

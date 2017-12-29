@@ -19,7 +19,7 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
 
     private final ByteBuffer compressBuffer;
     private final ByteBuffer unCompressBuffer;
-//    private final byte[] compressData;
+    //    private final byte[] compressData;
 
     private DecodeState state = DecodeState.READ_LEN;
     private int compressLength;
@@ -27,9 +27,9 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
 
     public CompressReadableByteChannel(ReadableByteChannel readableByteChannel, int size) {
         this.readableByteChannel = readableByteChannel;
-        compressBuffer = ByteBuffer.allocate(size+Integer.BYTES);
+        compressBuffer = ByteBuffer.allocate(size + Integer.BYTES);
         unCompressBuffer = ByteBuffer.allocate(size);
-//        compressData = new byte[size];
+        //        compressData = new byte[size];
     }
 
     @Override
@@ -41,12 +41,12 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
 
         boolean hasMore = true;
         MAIL_LOOP:
-        while(hasMore) {
+        while (hasMore) {
             hasMore = false;
             switch (state) {
 
-                case READ_LEN : {
-                    if( compressBuffer.remaining() < Integer.BYTES ) {
+                case READ_LEN: {
+                    if (compressBuffer.remaining() < Integer.BYTES) {
                         break;
                     }
                     compressLength = compressBuffer.getInt();
@@ -54,28 +54,27 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
                 }
 
                 case READ_DATA: {
-                    if( compressBuffer.remaining() < compressLength ) {
+                    if (compressBuffer.remaining() < compressLength) {
                         break;
                     }
-//                    final byte[] compressData = new byte[compressLength];
-//                    compressBuffer.get(compressData);
-//                    final byte[] unCompressData = unCompress(compressData, 1024);
-//                    unCompressBuffer.put(unCompressData);
+                    //                    final byte[] compressData = new byte[compressLength];
+                    //                    compressBuffer.get(compressData);
+                    //                    final byte[] unCompressData = unCompress(compressData, 1024);
+                    //                    unCompressBuffer.put(unCompressData);
                     compress.unCompress(compressBuffer, compressLength, unCompressBuffer);
                     unCompressBuffer.flip();
                     state = DecodeState.UN_COMPRESS;
                 }
 
-                case UN_COMPRESS : {
-                    if( !dst.hasRemaining() ) {
+                case UN_COMPRESS: {
+                    if (!dst.hasRemaining()) {
                         break MAIL_LOOP;
                     }
-                    while( dst.hasRemaining()
-                            && unCompressBuffer.hasRemaining()) {
+                    while (dst.hasRemaining() && unCompressBuffer.hasRemaining()) {
                         dst.put(unCompressBuffer.get());
                         count++;
                     }
-                    if( !unCompressBuffer.hasRemaining() ) {
+                    if (!unCompressBuffer.hasRemaining()) {
                         state = DecodeState.READ_LEN;
                         unCompressBuffer.compact();
                     }
@@ -87,7 +86,6 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
         }//while:hasMore
 
         compressBuffer.compact();
-
 
 
         return count;
@@ -105,9 +103,7 @@ public class CompressReadableByteChannel implements ReadableByteChannel {
     }
 
     enum DecodeState {
-        READ_LEN,
-        READ_DATA,
-        UN_COMPRESS
+        READ_LEN, READ_DATA, UN_COMPRESS
     }
 
 }

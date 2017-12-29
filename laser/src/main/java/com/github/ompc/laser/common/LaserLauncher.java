@@ -30,34 +30,25 @@ import static java.lang.Thread.currentThread;
  * Created by vlinux on 14-10-3.
  */
 public class LaserLauncher {
-
     private static final Logger log = LoggerFactory.getLogger(LaserLauncher.class);
 
     private static void startNioClient(String... args) throws IOException, InterruptedException {
-
         final long startTime = System.currentTimeMillis();
-
         final ClientConfiger configer = new ClientConfiger();
         configer.setServerAddress(new InetSocketAddress(args[1], Integer.valueOf(args[2])));
         configer.setDataFile(new File(args[3]));
-
         final LaserOptions options = new LaserOptions(new File(args[4]));
         final int worksNum = options.getClientWorkNumbers();
-
         // read+writer+persistence
         final CyclicBarrier workCyclicBarrier = new CyclicBarrier(worksNum * 2 + 1);
-
         final ExecutorService executorService = Executors.newCachedThreadPool((r) -> {
             final Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
         });
-
         final DataPersistence dataPersistence = new PageDataPersistence(configer.getDataFile());
-
         // 异步初始化数据源
         executorService.execute(() -> {
-
             try {
                 dataPersistence.init();
                 try {
@@ -76,7 +67,6 @@ public class LaserLauncher {
         // 异步创建建立链接
         final Set<NioLaserClient> clients = new HashSet<>();
         for (int i = 0; i < worksNum; i++) {
-
             executorService.execute(() -> {
                 final NioLaserClient client = new NioLaserClient(countDown, workCyclicBarrier, executorService, dataPersistence, configer, options);
                 try {
@@ -86,21 +76,15 @@ public class LaserLauncher {
                 } catch (IOException e) {
                     log.warn("client connect failed.", e);
                 }
-
             });
-
         }
-
         // 等待所有Client完成
         countDown.await();
-
         final long endTime = System.currentTimeMillis();
         System.out.println("cost=" + (endTime - startTime));
-
         // 刷新结果
         dataPersistence.flush();
         dataPersistence.destroy();
-
         // registe shutdown
         getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -113,7 +97,6 @@ public class LaserLauncher {
                 // do nothing...
             }
         }));
-
     }
 
     private static void startNioServer(String... args) throws IOException, InterruptedException {
@@ -123,9 +106,7 @@ public class LaserLauncher {
 
         final LaserOptions options = new LaserOptions(new File(args[3]));
 
-        final DataSource dataSource = options.isServerDebug()
-                ? new MockDataSource()
-                : new PageDataSource(configer.getDataFile());
+        final DataSource dataSource = options.isServerDebug() ? new MockDataSource() : new PageDataSource(configer.getDataFile());
         dataSource.init();
 
         final CountDownLatch countDown = new CountDownLatch(1);
@@ -145,12 +126,10 @@ public class LaserLauncher {
                 // do nothing...
             }
         }));
-
         countDown.await();
     }
 
     public static void main(String... args) throws IOException, InterruptedException {
-
         if (args[0].equals("nioclient")) {
             startNioClient(args);
         } else if (args[0].equals("nioserver")) {
@@ -158,7 +137,5 @@ public class LaserLauncher {
         } else {
             throw new IllegalArgumentException("illegal args[0]=" + args[0]);
         }
-
     }
-
 }

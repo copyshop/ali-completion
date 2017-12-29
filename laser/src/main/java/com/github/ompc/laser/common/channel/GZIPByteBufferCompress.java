@@ -18,8 +18,7 @@ public class GZIPByteBufferCompress implements ByteBufferCompress {
         final byte[] unCompressData = new byte[len];
         src.get(unCompressData);
         final byte[] compressData;
-        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-             final GZIPOutputStream gzipos = new GZIPOutputStream(baos)) {
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(1024); final GZIPOutputStream gzipos = new GZIPOutputStream(baos)) {
             gzipos.write(unCompressData);
             gzipos.finish();
             gzipos.flush();
@@ -34,8 +33,7 @@ public class GZIPByteBufferCompress implements ByteBufferCompress {
         final byte[] compressData = new byte[len];
         src.get(compressData);
         final byte[] unCompressData;
-        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-             final GZIPInputStream gzipis = new GZIPInputStream(new ByteArrayInputStream(compressData))) {
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(1024); final GZIPInputStream gzipis = new GZIPInputStream(new ByteArrayInputStream(compressData))) {
             final byte[] buffer = new byte[1024];
             int n;
             while ((n = gzipis.read(buffer)) >= 0) {

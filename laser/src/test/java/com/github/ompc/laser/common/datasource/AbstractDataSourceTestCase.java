@@ -1,7 +1,8 @@
 package com.github.ompc.laser.common.datasource;
 
-import junit.framework.Assert;
+
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,9 +82,7 @@ public abstract class AbstractDataSourceTestCase {
                         int counter = 0;
                         while (true) {
                             final Row row = dataSource.getRow(new Row());
-                            if (row.getLineNum() >= 0
-                                    && row.getData().length > 0
-                                    && !unique.contains(row.getLineNum())) {
+                            if (row.getLineNum() >= 0 && row.getData().length > 0 && !unique.contains(row.getLineNum())) {
                                 counter++;
                                 unique.add(row.getLineNum());
                             }//if
