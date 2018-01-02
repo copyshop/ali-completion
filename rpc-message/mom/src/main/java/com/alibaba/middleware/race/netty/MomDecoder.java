@@ -18,31 +18,31 @@ import java.util.List;
 /**
  * decode the MomMessage from the serialized data
  */
-public class MomDecoder extends ByteToMessageDecoder{
+public class MomDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         //
-        if(in.readableBytes() < 4)
+        if (in.readableBytes() < 4)
             return;
 
         in.markReaderIndex();
         int dataLen = in.readInt();
-        if(dataLen < 0){
+        if (dataLen < 0) {
             ctx.close();
         }
 
-        if(in.readableBytes() < dataLen){
+        if (in.readableBytes() < dataLen) {
             in.resetReaderIndex();
             return;
         }
 
         byte type = in.readByte();
-        byte[] data = new byte[dataLen-1];
+        byte[] data = new byte[dataLen - 1];
         in.readBytes(data);
 
         Object obj = new Object();
-        switch (type){
+        switch (type) {
             case 0x00:
                 obj = SerializationUtil.deserializer(data, ConsumerSubscription.class);
                 break;
@@ -55,9 +55,9 @@ public class MomDecoder extends ByteToMessageDecoder{
             case 0x03:
                 obj = SerializationUtil.deserializer(data, ConsumeResult.class);
                 break;
-            default:break;
+            default:
+                break;
         }
-
         out.add(obj);
     }
 }

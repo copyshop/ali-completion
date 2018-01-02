@@ -14,7 +14,7 @@ public class ProducerClientPool extends BasePooledObjectFactory<ProducerClient> 
     private int port;
     private GenericObjectPool<ProducerClient> pool;
 
-    public ProducerClientPool(String host, int port){
+    public ProducerClientPool(String host, int port) {
         this.host = host;
         this.port = port;
         pool = new GenericObjectPool<>(this);
@@ -25,30 +25,32 @@ public class ProducerClientPool extends BasePooledObjectFactory<ProducerClient> 
 
     /**
      * 从连接池中取出一个Client,并确保连接上Broker
+     *
      * @return
      */
-    public ProducerClient getClient(){
+    public ProducerClient getClient() {
         ProducerClient client = null;
-        try{
+        try {
             client = pool.borrowObject();
-            if(!client.isConnected()){
+            if (!client.isConnected()) {
                 client.connect();  // assure the client connected to server
             }
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             e.printStackTrace();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return  client;
+        return client;
     }
 
     /**
      * 回收一个Client
+     *
      * @param client
      */
-    public void recycleClient(ProducerClient client){
-        if(client != null){
+    public void recycleClient(ProducerClient client) {
+        if (client != null) {
             pool.returnObject(client);
         }
     }
@@ -56,9 +58,10 @@ public class ProducerClientPool extends BasePooledObjectFactory<ProducerClient> 
     /**
      * 销毁连接池中的所有对象
      */
-    public void destoryClientPool(){
+    public void destoryClientPool() {
         pool.clear();
     }
+
     @Override
     public ProducerClient create() throws Exception {
         return new ProducerClient(host, port);

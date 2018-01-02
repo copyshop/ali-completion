@@ -35,7 +35,7 @@ public class ProducerClient {
 
     private boolean connected;
 
-    public ProducerClient(String host, int port){
+    public ProducerClient(String host, int port) {
         this.host = host;
         this.port = port;
 
@@ -50,32 +50,29 @@ public class ProducerClient {
     private void initBootstrap() {
         workergroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
-        bootstrap.group(workergroup)
-                .channel(NioSocketChannel.class)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new ChannelInitializer<SocketChannel>() {
+        bootstrap.group(workergroup).channel(NioSocketChannel.class).option(ChannelOption.SO_KEEPALIVE, true).handler(
+                new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast("decoder", new MomDecoder())
-                                .addLast("encoder", new MomEncoder())
-                                .addLast("handler", new ProducerClientHandler());
+                        ch.pipeline().addLast("decoder", new MomDecoder()).addLast("encoder", new MomEncoder()).addLast(
+                                "handler", new ProducerClientHandler());
                     }
                 });
     }
 
-    public void connect(){
+    public void connect() {
         if (isConnected()) {
             return;
         }
-        try{
+        try {
             channel = bootstrap.connect(host, port).sync().channel();
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
     }
 
-    public void close(){
+    public void close() {
         channel.close().awaitUninterruptibly();
         workergroup.shutdownGracefully();
     }
@@ -86,35 +83,33 @@ public class ProducerClient {
 
     /**
      * 生产者同步发送Messager
+     *
      * @param msg
      * @return
      */
-    public SendResult sendMessage(Message msg) throws TimeoutException{
+    public SendResult sendMessage(Message msg) throws TimeoutException {
         // 写数据到Channel
         channel.pipeline().addFirst("timeout", new ReadTimeoutHandler(timeout, TimeUnit.SECONDS));
         channel.writeAndFlush(msg);
-
-        try{
+        try {
             Object obj = resultQueue.take();
-
             channel.pipeline().removeFirst();
-
-            if(obj instanceof SendResult){
-                return (SendResult)obj;
-            }else{
-                throw (TimeoutException)obj;
+            if (obj instanceof SendResult) {
+                return (SendResult) obj;
+            } else {
+                throw (TimeoutException) obj;
             }
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return  null;
+        return null;
     }
 
 
     /**
      * 生产者处理Handler
      */
-    public class ProducerClientHandler extends SimpleChannelInboundHandler<SendResult>{
+    public class ProducerClientHandler extends SimpleChannelInboundHandler<SendResult> {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, SendResult sendResult) throws Exception {
 
@@ -124,7 +119,7 @@ public class ProducerClient {
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 
-            TimeoutException exception = (TimeoutException)cause;
+            TimeoutException exception = (TimeoutException) cause;
             resultQueue.put(exception);
         }
 

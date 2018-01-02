@@ -17,9 +17,8 @@ public class MessageQueueCheckThread extends Thread {
     private ConsumerManager consumerManager;
     private ExecutorService threadpool;
 
-    public MessageQueueCheckThread(){
+    public MessageQueueCheckThread() {
         consumerManager = ConsumerManager.getInstance();
-
         threadpool = Executors.newCachedThreadPool();
     }
 
@@ -29,32 +28,27 @@ public class MessageQueueCheckThread extends Thread {
         //后台死循环检测消息队列
         while (true) {
             // 5ms检测一次队列是否为空
-            if(consumerManager.getMessageQueueSize() > 0){
+            if (consumerManager.getMessageQueueSize() > 0) {
                 List<Message> messages = consumerManager.getMessageFromQueue(THRESHLOD);
                 // 新建持久化任务
-                if(messages.size() > 0){
+                if (messages.size() > 0) {
                     threadpool.execute(new PersistenceTask(messages));
                 }
             }
-
-            if(consumerManager.getMsgIdQueueSize() > 5*THRESHLOD ||
-                    System.currentTimeMillis() - consumerManager.getLastTime() > 50){
+            if (consumerManager.getMsgIdQueueSize() > 5 * THRESHLOD || System.currentTimeMillis() - consumerManager.getLastTime() > 50) {
                 // 新建重发消息任务
-                List<MessageInfo> messageInfos = consumerManager.getValidMessageInfos(5*THRESHLOD);
-
-                if(messageInfos.size() > 0){
+                List<MessageInfo> messageInfos = consumerManager.getValidMessageInfos(5 * THRESHLOD);
+                if (messageInfos.size() > 0) {
                     threadpool.execute(new MessageResendTask(messageInfos));
                 }
             }
-
-            //System.out.println("back thread");
+            System.out.println("back thread");
             // 空闲,线程休眠
-            try{
+            try {
                 Thread.sleep(INTERVAL);
-            }catch (InterruptedException e){
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-
     }
 }

@@ -29,12 +29,11 @@ public class ConsumerClient {
 
     private boolean connected;
 
-    public ConsumerClient(String host, int port, MessageListener listener, String groupId){
+    public ConsumerClient(String host, int port, MessageListener listener, String groupId) {
         this.host = host;
         this.port = port;
         this.listener = listener;
         this.groupId = groupId;
-
         connected = false;
         initBootstrap();
     }
@@ -45,27 +44,24 @@ public class ConsumerClient {
     private void initBootstrap() {
         workergroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
-        bootstrap.group(workergroup)
-                .channel(NioSocketChannel.class)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new ChannelInitializer<SocketChannel>() {
+        bootstrap.group(workergroup).channel(NioSocketChannel.class).option(ChannelOption.SO_KEEPALIVE, true).handler(
+                new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast("decoder", new MomDecoder())
-                                .addLast("encoder", new MomEncoder())
-                                .addLast("handler", new ConsumerClientHandler());
+                        ch.pipeline().addLast("decoder", new MomDecoder()).addLast("encoder", new MomEncoder()).addLast(
+                                "handler", new ConsumerClientHandler());
                     }
                 });
     }
 
-    public void connect() throws InterruptedException{
+    public void connect() throws InterruptedException {
         if (isConnected()) {
             return;
         }
         channel = bootstrap.connect(host, port).sync().channel();
     }
 
-    public void close(){
+    public void close() {
         channel.close().awaitUninterruptibly();
         workergroup.shutdownGracefully();
     }
@@ -76,32 +72,29 @@ public class ConsumerClient {
 
     /**
      * 消费者发送订阅信息
+     *
      * @param subscription
      */
-    public void sendSubscription(ConsumerSubscription subscription){
-
+    public void sendSubscription(ConsumerSubscription subscription) {
         channel.writeAndFlush(subscription);
     }
 
-    public void sendConsumerResult(ConsumeResult consumeResult){
-
+    public void sendConsumerResult(ConsumeResult consumeResult) {
         channel.writeAndFlush(consumeResult);
     }
 
     /**
      * 消费者处理Handler
      */
-    public class ConsumerClientHandler extends SimpleChannelInboundHandler<Message>{
+    public class ConsumerClientHandler extends SimpleChannelInboundHandler<Message> {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Message message) throws Exception {
             ConsumeResult consumeResult = listener.onMessage(message);
-
             // 设置消息id和groupId
             consumeResult.setMsgId(message.getMsgId());
             consumeResult.setGroupId(groupId);
-
             sendConsumerResult(consumeResult);
-            //System.out.println("send consume result to broker");
+            System.out.println("send consume result to broker");
         }
 
         @Override

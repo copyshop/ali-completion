@@ -32,12 +32,13 @@ public class SFileManager {
 
     /**
      * 单例模式,全局唯一实例
+     *
      * @return
      */
-    public static SFileManager getInstance(){
-        if(instance == null){
-            synchronized (lock){
-                if(instance == null){
+    public static SFileManager getInstance() {
+        if (instance == null) {
+            synchronized (lock) {
+                if (instance == null) {
                     instance = new SFileManager();
                 }
             }
@@ -48,15 +49,11 @@ public class SFileManager {
 
     public SFileManager() {
         baseFolder = System.getProperty("user.home") + File.separator + "store";
-        //baseFolder = "store";
         File file = new File(baseFolder);
-        if(!file.exists()){
+        if (!file.exists()) {
             file.mkdir();  // 目录不存在,则建立新目录
         }
         baseFolder += File.separator;
-
-        // for local test
-        //baseFolder = "F:\\storage\\";
 
         try {
             writeMessageStream = new RandomAccessFile(baseFolder + "message", "rw");
@@ -65,13 +62,12 @@ public class SFileManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //currOffset = 0;
         indexCache = new ConcurrentHashMap<>();
-        // recover currOffset and indexCache here
     }
 
     /**
      * 写一条消息到存储系统
+     *
      * @param msg
      * @return
      */
@@ -108,6 +104,7 @@ public class SFileManager {
 
     /**
      * 从存储系统读取一条消息
+     *
      * @param msgId
      * @return
      */
@@ -132,6 +129,7 @@ public class SFileManager {
 
     /**
      * 移除msgId-->offset的偏移量
+     *
      * @param msgId
      */
     public void removeMessage(String msgId) {
@@ -141,6 +139,7 @@ public class SFileManager {
 
     /**
      * 批量写消息到文件系统
+     *
      * @param messages
      * @return
      */
@@ -169,9 +168,7 @@ public class SFileManager {
                         //currOffset += data.length + 4;
                         writeResult.add(message);
                     } catch (Exception e) {
-                        // e.printStackTrace();
-                        // write failure
-                        // return false;
+                        e.printStackTrace();
                     }
                 }
 

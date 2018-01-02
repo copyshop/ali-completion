@@ -10,8 +10,6 @@
 
     <modules>
         <module>laser</module>
-        <module>middleware-mom</module>
-        <module>openmessage</module>
         <module>order-system-1</module>
         <module>order-system-2</module>
         <module>order-system-3</module>

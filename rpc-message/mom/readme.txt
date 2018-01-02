@@ -66,3 +66,6 @@
 
 修改了 com.alibaba.middleware.race.model包的类ConsumerManager, 移除了映射表channel-->groupId，
             采用netty的channelGroup自动管理关联的channel,自动移除close的channel
+
+
+需要先开启

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by liuchun on 2015/8/1.
  */
-public class DefaultProducer implements Producer{
+public class DefaultProducer implements Producer {
     // broker ip
     private String brokerIP;
     // broker port
@@ -31,11 +31,8 @@ public class DefaultProducer implements Producer{
     private ExecutorService threadpool;
 
     public DefaultProducer() {
-
         brokerIP = "127.0.0.1";
-        //brokerIP = System.getProperty("SIP");
         port = 9999;
-
         threadpool = Executors.newCachedThreadPool();
     }
 
@@ -62,29 +59,24 @@ public class DefaultProducer implements Producer{
     @Override
     public SendResult sendMessage(Message message) {
         int retry = 0;
-
-        //Random random = new Random();
-        //long msgId = ((long)random.nextInt(Integer.MAX_VALUE) << 32) + random.nextInt();
         message.setMsgId(UUID.randomUUID().toString());
         message.setTopic(topic);
         message.setBornTime(System.currentTimeMillis());
 
         ProducerClient client = clientPool.getClient();
         SendResult sendResult = new SendResult();
-        while (retry < 3){
+        while (retry < 3) {
             try {
                 //synchronized (client){
-                    sendResult = client.sendMessage(message);
+                sendResult = client.sendMessage(message);
                 //}
-
                 return sendResult;
-            }catch (TimeoutException e){
+            } catch (TimeoutException e) {
                 retry++;
-            }finally {
+            } finally {
                 clientPool.recycleClient(client);
             }
         }
-
         sendResult.setMsgId(message.getMsgId());
         sendResult.setStatus(SendStatus.FAIL);
         sendResult.setInfo("timeout");
@@ -118,34 +110,34 @@ public class DefaultProducer implements Producer{
     /**
      * 异步调用任务
      */
-    public class asynCallTask extends Thread{
+    public class asynCallTask extends Thread {
         private Message message;
         private SendCallback callback;
 
-        public asynCallTask(Message message, SendCallback callback){
+        public asynCallTask(Message message, SendCallback callback) {
             this.message = message;
             this.callback = callback;
         }
+
         @Override
         public void run() {
             int retry = 0;
             // 每次发消息之前,从连接池获取一个Client
             ProducerClient client = clientPool.getClient();
             SendResult sendResult = new SendResult();
-            while (retry < 3){
+            while (retry < 3) {
                 try {
                     //synchronized (client){
-                        sendResult = client.sendMessage(message);
+                    sendResult = client.sendMessage(message);
                     //}
                     callback.onResult(sendResult);
                     return;
-                }catch (TimeoutException e){
+                } catch (TimeoutException e) {
                     retry++;
-                }finally {
+                } finally {
                     clientPool.recycleClient(client);
                 }
             }
-
             sendResult.setMsgId(message.getMsgId());
             sendResult.setStatus(SendStatus.FAIL);
             sendResult.setInfo("timeout");

@@ -29,7 +29,6 @@ public class ConsumerInfo {
     public ConsumerInfo(String groupId, String topic){
         this.groupId = groupId;
         this.topic = topic;
-
         channelGroup = new DefaultChannelGroup(groupId, GlobalEventExecutor.INSTANCE);
     }
 

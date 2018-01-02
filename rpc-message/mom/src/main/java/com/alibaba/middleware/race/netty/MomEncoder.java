@@ -15,34 +15,33 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 /**
  * encode the MomMessage to serialized data
- *
+ * <p>
  * protocol
  * |--- 4 bytes ---| --- 1 byte ---| --- content --- |
  * 0x00 : subscription  0x01: message  0x02: provider result  0x03: consumer result
- *
  */
-public class MomEncoder extends MessageToByteEncoder{
+public class MomEncoder extends MessageToByteEncoder {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object obj, ByteBuf out) throws Exception {
-        byte[]  data;
+        byte[] data;
         byte type = 0;
 
-        if(obj instanceof ConsumerSubscription){
+        if (obj instanceof ConsumerSubscription) {
             type = 0x00;
-        }else if(obj instanceof Message){
+        } else if (obj instanceof Message) {
             type = 0x01;
-        }else if(obj instanceof SendResult){
+        } else if (obj instanceof SendResult) {
             type = 0x02;
-        }else if(obj instanceof ConsumeResult){
+        } else if (obj instanceof ConsumeResult) {
             type = 0x03;
-        }else{
+        } else {
             type = 0x05;
         }
 
         data = SerializationUtil.serializer(obj);
-
-        int len = data.length + 1;  // subscription length + 1 byte (type indicate)
+        // subscription length + 1 byte (type indicate)
+        int len = data.length + 1;
         out.writeInt(len);
         out.writeByte(type);
         out.writeBytes(data);

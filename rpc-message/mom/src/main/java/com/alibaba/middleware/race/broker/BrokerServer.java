@@ -15,47 +15,40 @@ public class BrokerServer {
     // listening port
     private int port;
 
-    public BrokerServer(int port){
+    public BrokerServer(int port) {
         this.port = port;
     }
 
     /**
      * 启动broker
+     *
      * @param args
      */
     public static void main(String[] args) {
         int port = 9999;
         BrokerServer server = new BrokerServer(port);
-
         MessageQueueCheckThread thread = new MessageQueueCheckThread();
         thread.start();   //启动后台线程检测是否有数据需要重传
-
         server.start();
     }
-
 
     /**
      * 启动服务器
      */
-    public void start(){
+    public void start() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-
-        try{
+        try {
             ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
+            bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(
+                    new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             // add handlers
-                            ch.pipeline().addLast("rpcDecoder", new MomDecoder())
-                                    .addLast("rpcEncoder", new MomEncoder())
-                                    .addLast("logical", new BrokerServerHandler());
+                            ch.pipeline().addLast("rpcDecoder", new MomDecoder()).addLast("rpcEncoder",
+                                    new MomEncoder()).addLast("logical", new BrokerServerHandler());
                         }
-                    })
-                    .option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    }).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
 
             // bind and start to accept incoming connections
             ChannelFuture future = bootstrap.bind(port).sync();
@@ -71,8 +64,5 @@ public class BrokerServer {
             workerGroup.shutdownGracefully();
             bossGroup.isShuttingDown();
         }
-
-        //never go there
-        //System.out.println("server is shutdown!\n");
     }
 }
