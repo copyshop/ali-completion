@@ -1,8 +1,0 @@
-target
-.idea
-*.iml
-*.idx*
-test
-data
-gc.log
-diskk*
